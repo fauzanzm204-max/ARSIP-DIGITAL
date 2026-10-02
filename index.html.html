@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Informasi Arsip Surat Digital</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --body-bg: #f8fafc;
+            --card-border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--body-bg);
+            color: #334155;
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            min-width: 260px;
+            max-width: 260px;
+            background-color: var(--sidebar-bg);
+            min-height: 100vh;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        #sidebar .nav-link {
+            color: #94a3b8;
+            padding: 12px 20px;
+            margin: 4px 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        #sidebar .nav-link:hover, #sidebar .nav-link.active {
+            color: #ffffff;
+            background-color: var(--sidebar-hover);
+        }
+
+        #sidebar .nav-link.active {
+            background-color: var(--primary-color);
+        }
+
+        /* Content Area */
+        #content {
+            width: 100%;
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+
+        .card {
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        /* Login Layout */
+        .auth-card {
+            max-width: 450px;
+            width: 100%;
+            border-radius: 16px;
+        }
+
+        /* Printable Area */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-area, #printable-area * {
+                visibility: visible;
+            }
+            #printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUTHENTICATION PAGE (LOGIN & REGISTRASI) -->
+    <div id="auth-page" class="d-flex align-items-center justify-content-center min-vh-100 bg-light p-3">
+        <div class="card auth-card shadow-lg border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fa-solid fa-box-archive fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold">Arsip Surat Digital</h4>
+                    <p class="text-muted small">Kelola dokumen & arsip surat masuk dengan mudah</p>
+                </div>
+
+                <!-- Nav Tabs for Login / Register -->
+                <ul class="nav nav-pills nav-justified mb-4" id="authTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-semibold" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-pane" type="button" role="tab">Masuk</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-pane" type="button" role="tab">Daftar Akun</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="authTabsContent">
+                    <!-- Tab Login -->
+                    <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
+                        <form id="loginForm" onsubmit="handleLogin(event)">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Email / Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fa-solid fa-envelope text-muted"></i></span>
+                                    <input type="text" id="loginUsername" class="form-control" placeholder="Masukkan email/username" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Kata Sandi</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fa-solid fa-lock text-muted"></i></span>
+                                    <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm mt-3">
+                                <i class="fa-solid fa-right-to-bracket me-2"></i>Masuk Aplikasi
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Tab Registrasi Pengguna Baru -->
+                    <div class="tab-pane fade" id="register-pane" role="tabpanel">
+                        <form id="registerForm" onsubmit="handleRegister(event)">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Nama Lengkap</label>
+                                <input type="text" id="regName" class="form-control" placeholder="Nama lengkap" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Alamat Email</label>
+                                <input type="email" id="regEmail" class="form-control" placeholder="nama@email.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Kata Sandi</label>
+                                <input type="password" id="regPassword" class="form-control" placeholder="Minimal 6 karakter" required minlength="6">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Peran / Hak Akses</label>
+                                <select id="regRole" class="form-select" required>
+                                    <option value="staf">Staf Operasional</option>
+                                    <option value="viewer">Viewer (Hanya Lihat)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 py-2 fw-semibold shadow-sm mt-2">
+                                <i class="fa-solid fa-user-plus me-2"></i>Daftar Akun Baru
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD APP (DITAMPILKAN SETELAH LOGIN) -->
+    <div id="main-app" class="d-flex d-none">
+        <!-- Sidebar Navigation -->
+        <nav id="sidebar" class="d-flex flex-column justify-content-between p-3">
+            <div>
+                <div class="d-flex align-items-center gap-3 px-3 py-3 mb-4 text-white border-bottom border-secondary">
+                    <div class="bg-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="fa-solid fa-box-archive text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">e-Arsip Surat</h6>
+                        <small class="text-muted">v2.0 Digital System</small>
+                    </div>
+                </div>
+
+                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                    <a class="nav-link active" id="nav-dashboard" data-bs-toggle="pill" href="#pane-dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+                    <a class="nav-link" id="nav-surat" data-bs-toggle="pill" href="#pane-surat"><i class="fa-solid fa-envelope-open-text"></i> Surat Masuk</a>
+                    <a class="nav-link" id="nav-kategori" data-bs-toggle="pill" href="#pane-kategori"><i class="fa-solid fa-tags"></i> Kategori Surat</a>
+                    <a class="nav-link" id="nav-filter" data-bs-toggle="pill" href="#pane-filter"><i class="fa-solid fa-filter"></i> Filter Lanjutan</a>
+                    <a class="nav-link" id="nav-laporan" data-bs-toggle="pill" href="#pane-laporan"><i class="fa-solid fa-file-invoice"></i> Laporan Rekap</a>
+                    <a class="nav-link admin-only" id="nav-pengaturan" data-bs-toggle="pill" href="#pane-pengaturan"><i class="fa-solid fa-users-cog"></i> Pengaturan Pengguna</a>
+                </div>
+            </div>
+
+            <div class="border-top border-secondary pt-3 px-2">
+                <div class="d-flex align-items-center justify-content-between text-white">
+                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                        <i class="fa-solid fa-circle-user fa-2x text-primary"></i>
+                        <div class="lh-1 text-truncate">
+                            <span class="d-block fw-semibold text-truncate" id="userDisplayName">User</span>
+                            <span class="badge bg-secondary text-uppercase mt-1" id="userRoleBadge">Role</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm rounded-circle ms-2" onclick="handleLogout()" title="Keluar">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div id="content" class="p-4 overflow-auto">
+            <div class="tab-content">
+
+                <!-- 1. DASHBOARD PANE -->
+                <div class="tab-pane fade show active" id="pane-dashboard">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold mb-1">Dashboard Ikhtisar</h4>
+                            <p class="text-muted mb-0">Statistik dan data arsip surat dalam sistem</p>
+                        </div>
+                    </div>
+
+                    <!-- Ringkasan Card -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card p-3 border-0 bg-primary bg-opacity-10">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-primary fw-bold text-uppercase">Total Surat</small>
+                                        <h3 class="fw-bold mb-0 text-primary" id="dashTotalSurat">0</h3>
+                                    </div>
+                                    <i class="fa-solid fa-envelope fa-2x text-primary opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 border-0 bg-success bg-opacity-10">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-success fw-bold text-uppercase">Selesai / Terarsip</small>
+                                        <h3 class="fw-bold mb-0 text-success" id="dashSuratSelesai">0</h3>
+                                    </div>
+                                    <i class="fa-solid fa-circle-check fa-2x text-success opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 border-0 bg-warning bg-opacity-10">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-warning fw-bold text-uppercase">Perlu Proses</small>
+                                        <h3 class="fw-bold mb-0 text-warning" id="dashSuratProses">0</h3>
+                                    </div>
+                                    <i class="fa-solid fa-clock fa-2x text-warning opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 border-0 bg-info bg-opacity-10">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-info fw-bold text-uppercase">Kategori Surat</small>
+                                        <h3 class="fw-bold mb-0 text-info" id="dashTotalKategori">0</h3>
+                                    </div>
+                                    <i class="fa-solid fa-tags fa-2x text-info opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Area -->
+                    <div class="row g-4">
+                        <div class="col-md-8">
+                            <div class="card p-4 h-100">
+                                <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-column me-2 text-primary"></i>Grafik Surat Masuk per Bulan</h6>
+                                <canvas id="chartSuratBulan" style="max-height: 280px;"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card p-4 h-100">
+                                <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Distribusi Kategori</h6>
+                                <canvas id="chartKategori" style="max-height: 280px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. SURAT MASUK PANE (CRUD) -->
+                <div class="tab-pane fade" id="pane-surat">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold mb-1">Manajemen Surat Masuk</h4>
+                            <p class="text-muted mb-0">Kelola dan arsipkan surat yang diterima</p>
+                        </div>
+                        <button class="btn btn-primary can-input" onclick="openModalSurat()"><i class="fa-solid fa-plus me-2"></i>Tambah Surat Masuk</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3">No. Agenda / Nomor Surat</th>
+                                            <th>Pengirim & Perihal</th>
+                                            <th>Tanggal Masuk</th>
+                                            <th>Kategori</th>
+                                            <th>Status</th>
+                                            <th>Penginput</th>
+                                            <th class="text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableSuratBody">
+                                        <!-- Data rendered dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. KATEGORI SURAT PANE (CRUD) -->
+                <div class="tab-pane fade" id="pane-kategori">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold mb-1">Kategori Surat</h4>
+                            <p class="text-muted mb-0">Atur pengelompokan klasifikasi surat</p>
+                        </div>
+                        <button class="btn btn-primary can-input" onclick="openModalKategori()"><i class="fa-solid fa-plus me-2"></i>Tambah Kategori</button>
+                    </div>
+
+                    <div class="row g-3" id="kategoriListArea">
+                        <!-- Data kategori rendered dynamic -->
+                    </div>
+                </div>
+
+                <!-- 4. FILTER LANJUTAN PANE -->
+                <div class="tab-pane fade" id="pane-filter">
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-1">Pencarian & Filter Lanjutan</h4>
+                        <p class="text-muted mb-0">Temukan dokumen surat dengan kriteria spesifik</p>
+                    </div>
+
+                    <div class="card mb-4 p-3 bg-light">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Kata Kunci (Nomor/Perihal/Pengirim)</label>
+                                <input type="text" id="filterKeyword" class="form-control" placeholder="Ketik kata kunci...">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Kategori</label>
+                                <select id="filterKategori" class="form-select">
+                                    <option value="">-- Semua Kategori --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Status Disposisi</label>
+                                <select id="filterStatus" class="form-select">
+                                    <option value="">-- Semua Status --</option>
+                                    <option value="Diterima">Diterima</option>
+                                    <option value="Diproses">Diproses</option>
+                                    <option value="Selesai">Selesai</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" onclick="applyFilter()"><i class="fa-solid fa-magnifying-glass me-2"></i>Cari Data</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3">No. Surat</th>
+                                            <th>Pengirim & Perihal</th>
+                                            <th>Tanggal Masuk</th>
+                                            <th>Kategori</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableFilterBody">
+                                        <tr><td colspan="5" class="text-center py-4 text-muted">Gunakan opsi filter di atas untuk menayangkan data.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. LAPORAN REKAP PANE -->
+                <div class="tab-pane fade" id="pane-laporan">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold mb-1">Laporan & Rekapitulasi</h4>
+                            <p class="text-muted mb-0">Cetak dokumen laporan rekapitulasi surat masuk</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-success" onclick="exportToExcel()"><i class="fa-solid fa-file-excel me-2"></i>Ekspor Excel</button>
+                            <button class="btn btn-danger" onclick="printLaporan()"><i class="fa-solid fa-print me-2"></i>Cetak Laporan PDF</button>
+                        </div>
+                    </div>
+
+                    <div class="card p-3 mb-4">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Bulan Periode</label>
+                                <select id="laporanBulan" class="form-select">
+                                    <option value="all">Semua Bulan</option>
+                                    <option value="01">Januari</option>
+                                    <option value="02">Februari</option>
+                                    <option value="03">Maret</option>
+                                    <option value="04">April</option>
+                                    <option value="05">Mei</option>
+                                    <option value="06">Juni</option>
+                                    <option value="07">Juli</option>
+                                    <option value="08">Agustus</option>
+                                    <option value="09">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Tahun</label>
+                                <input type="number" id="laporanTahun" class="form-control" value="2026">
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-secondary w-100" onclick="generateLaporan()"><i class="fa-solid fa-sync me-2"></i>Tampilkan Rekap</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Printable Container -->
+                    <div id="printable-area">
+                        <div class="card p-4">
+                            <!-- Kop Surat Preview (Print Only Style) -->
+                            <div class="text-center pb-3 mb-3 border-bottom border-2 border-dark">
+                                <h4 class="fw-bold text-uppercase mb-1">PEMERINTAH KOTA / INSTANSI RESMI</h4>
+                                <h5 class="fw-bold text-uppercase mb-1">DINAS KEARSIPAN DAN PERPUSTAKAAN</h5>
+                                <p class="mb-0 small">Jl. Merdeka Utama No. 100 Telp. (021) 555-1234 Fax. 555-4321</p>
+                            </div>
+
+                            <h5 class="text-center fw-bold text-uppercase my-3">LAPORAN REKAPITULASI SURAT MASUK</h5>
+
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th>No</th>
+                                        <th>No. Surat</th>
+                                        <th>Tanggal Masuk</th>
+                                        <th>Pengirim</th>
+                                        <th>Perihal</th>
+                                        <th>Kategori</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableLaporanBody">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+
+                            <div class="d-flex justify-content-between mt-5 pt-4 text-center">
+                                <div>
+                                    <p class="mb-5">Mengetahui,<br><strong>Kepala Dinas</strong></p>
+                                    <p class="mt-4 fw-bold text-decoration-underline">Drs. H. Ahmad Subagja, M.Si</p>
+                                </div>
+                                <div>
+                                    <p class="mb-5">Tanjung Selor, <span id="printDate">02 Oktober 2026</span><br><strong>Petugas Arsip</strong></p>
+                                    <p class="mt-4 fw-bold text-decoration-underline" id="printOfficer">Administrator</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. PENGATURAN PENGGUNA & HAK AKSES PANE (ADMIN ONLY) -->
+                <div class="tab-pane fade" id="pane-pengaturan">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold mb-1">Manajemen Pengguna & Hak Akses</h4>
+                            <p class="text-muted mb-0">Kelola akun dan batasan hak akses pengguna sistem</p>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header bg-white py-3">
+                                    <h6 class="fw-bold mb-0"><i class="fa-solid fa-users me-2"></i>Daftar Pengguna Terdaftar</h6>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="ps-3">Nama</th>
+                                                    <th>Email / Username</th>
+                                                    <th>Role</th>
+                                                    <th class="text-center">Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tablePenggunaBody">
+                                                <!-- Dynamic Render -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header bg-white py-3">
+                                    <h6 class="fw-bold mb-0"><i class="fa-solid fa-shield-halved me-2"></i>Matriks Hak Akses Role</h6>
+                                </div>
+                                <div class="card-body small">
+                                    <div class="mb-3">
+                                        <span class="badge bg-danger mb-1">ADMIN</span>
+                                        <p class="text-muted mb-0">Akses Penuh: Tambah, Edit, Hapus data surat, kategori, pengguna, dan opsi rekap.</p>
+                                    </div>
+                                    <hr>
+                                    <div class="mb-3">
+                                        <span class="badge bg-primary mb-1">STAF OPERASIONAL</span>
+                                        <p class="text-muted mb-0">Dapat menginput & mengedit data surat milik sendiri. Tidak dapat mengelola user.</p>
+                                    </div>
+                                    <hr>
+                                    <div>
+                                        <span class="badge bg-secondary mb-1">VIEWER</span>
+                                        <p class="text-muted mb-0">Hanya dapat membaca dan mengunduh laporan (Read-Only).</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SURAT MASUK (TAMBAH / EDIT) -->
+    <div class="modal fade" id="modalSurat" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalSuratTitle">Tambah Surat Masuk</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formSurat" onsubmit="saveSurat(event)">
+                    <div class="modal-body">
+                        <input type="hidden" id="suratId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nomor Surat</label>
+                                <input type="text" id="suratNo" class="form-control" placeholder="contoh: 005/DKP/2026" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tanggal Masuk</label>
+                                <input type="date" id="suratTanggal" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Pengirim</label>
+                                <input type="text" id="suratPengirim" class="form-control" placeholder="Instansi/Perusahaan pengirim" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Kategori Surat</label>
+                                <select id="suratKategori" class="form-select" required>
+                                    <!-- Dynamic Options -->
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Perihal Surat</label>
+                                <input type="text" id="suratPerihal" class="form-control" placeholder="Ringkasan perihal surat" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Status Disposisi</label>
+                                <select id="suratStatus" class="form-select" required>
+                                    <option value="Diterima">Diterima</option>
+                                    <option value="Diproses">Diproses</option>
+                                    <option value="Selesai">Selesai</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Upload Lampiran (PDF / Gambar)</label>
+                                <input type="file" id="suratFile" class="form-control" accept="image/*,.pdf" onchange="handleFileUpload(event)">
+                                <small class="text-muted d-block mt-1" id="fileHelpText">Maksimal 2MB</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save me-2"></i>Simpan Data</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL SURAT -->
+    <div class="modal fade" id="modalDetailSurat" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Detail Dokumen Surat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detailSuratContent">
+                    <!-- Dynamic Detail Content -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KATEGORI (TAMBAH / EDIT) -->
+    <div class="modal fade" id="modalKategori" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalKategoriTitle">Tambah Kategori</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formKategori" onsubmit="saveKategori(event)">
+                    <div class="modal-body">
+                        <input type="hidden" id="kategoriId">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nama Kategori</label>
+                            <input type="text" id="kategoriNama" class="form-control" placeholder="Contoh: Undangan Resmi" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Deskripsi Singkat</label>
+                            <textarea id="kategoriDeskripsi" class="form-control" rows="2" placeholder="Penjelasan kategori..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan Kategori</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle & Chart.js & SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // DATA INITIALIZATION & LOCALSTORAGE MANAGEMENT
+        const DEFAULT_ADMIN = 'fauzanzm204@gmail.com';
+
+        let users = JSON.parse(localStorage.getItem('arsip_users')) || [
+            { id: '1', name: 'Admin Utama', username: DEFAULT_ADMIN, password: 'Admin', role: 'admin' },
+            { id: '2', name: 'Staf Administrasi', username: 'staf', password: '123', role: 'staf' },
+            { id: '3', name: 'Viewer Surat', username: 'viewer', password: '123', role: 'viewer' }
+        ];
+
+        let kategori = JSON.parse(localStorage.getItem('arsip_kategori')) || [
+            { id: '1', nama: 'Undangan Resmi', deskripsi: 'Surat undangan acara / kegiatan resmi' },
+            { id: '2', nama: 'Surat Edaran', deskripsi: 'Instruksi atau pemberitahuan umum' },
+            { id: '3', nama: 'Permohonan / Pengajuan', deskripsi: 'Surat permohonan izin atau bantuan' }
+        ];
+
+        let suratMasuk = JSON.parse(localStorage.getItem('arsip_surat')) || [
+            { 
+                id: '1', 
+                no: '001/DINAS/2026', 
+                tanggal: '2026-10-01', 
+                pengirim: 'Kementerian Dalam Negeri', 
+                perihal: 'Undangan Rapat Koordinasi Tahunan', 
+                kategoriId: '1', 
+                status: 'Diterima',
+                createdBy: DEFAULT_ADMIN,
+                fileData: null,
+                fileName: ''
+            }
+        ];
+
+        let currentUser = JSON.parse(localStorage.getItem('arsip_currentUser')) || null;
+        let uploadedFileBase64 = null;
+        let uploadedFileName = '';
+
+        let chartBulanInstance = null;
+        let chartKategoriInstance = null;
+
+        // Save data back to localStorage
+        function saveData() {
+            localStorage.setItem('arsip_users', JSON.stringify(users));
+            localStorage.setItem('arsip_kategori', JSON.stringify(kategori));
+            localStorage.setItem('arsip_surat', JSON.stringify(suratMasuk));
+        }
+
+        // INIT APP ON LOAD
+        document.addEventListener('DOMContentLoaded', () => {
+            if (currentUser) {
+                showMainApp();
+            } else {
+                showAuthPage();
+            }
+        });
+
+        // AUTHENTICATION LOGIC
+        function handleLogin(e) {
+            e.preventDefault();
+            const uInput = document.getElementById('loginUsername').value.trim();
+            const pInput = document.getElementById('loginPassword').value.trim();
+
+            const foundUser = users.find(u => u.username.toLowerCase() === uInput.toLowerCase() && u.password === pInput);
+
+            if (foundUser) {
+                currentUser = foundUser;
+                localStorage.setItem('arsip_currentUser', JSON.stringify(currentUser));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Login Berhasil',
+                    text: `Selamat datang kembali, ${currentUser.name}!`,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                showMainApp();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Login',
+                    text: 'Username atau Password salah!'
+                });
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+
+            if (users.find(u => u.username.toLowerCase() === email.toLowerCase())) {
+                Swal.fire('Error', 'Email sudah terdaftar!', 'error');
+                return;
+            }
+
+            const newUser = {
+                id: Date.now().toString(),
+                name,
+                username: email,
+                password,
+                role
+            };
+
+            users.push(newUser);
+            saveData();
+
+            Swal.fire('Berhasil', 'Akun berhasil dibuat! Silakan masuk.', 'success');
+            document.getElementById('registerForm').reset();
+            const loginTab = new bootstrap.Tab(document.getElementById('login-tab'));
+            loginTab.show();
+        }
+
+        function handleLogout() {
+            Swal.fire({
+                title: 'Konfirmasi Keluar',
+                text: 'Apakah Anda yakin ingin keluar?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Keluar'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    currentUser = null;
+                    localStorage.removeItem('arsip_currentUser');
+                    showAuthPage();
+                }
+            });
+        }
+
+        function showAuthPage() {
+            document.getElementById('auth-page').classList.remove('d-none');
+            document.getElementById('main-app').classList.add('d-none');
+        }
+
+        function showMainApp() {
+            document.getElementById('auth-page').classList.add('d-none');
+            document.getElementById('main-app').classList.remove('d-none');
+
+            // Render Header User Info
+            document.getElementById('userDisplayName').innerText = currentUser.name;
+            document.getElementById('userRoleBadge').innerText = currentUser.role;
+
+            // Apply Role Access Limitations
+            applyRoleRestrictions();
+
+            // Refresh UI Views
+            renderDashboard();
+            renderSuratTable();
+            renderKategoriList();
+            populateKategoriDropdowns();
+            renderPenggunaTable();
+            generateLaporan();
+        }
+
+        // HAK AKSES ROLE RESTRICTIONS
+        function applyRoleRestrictions() {
+            const adminElements = document.querySelectorAll('.admin-only');
+            const canInputElements = document.querySelectorAll('.can-input');
+
+            if (currentUser.role === 'admin') {
+                adminElements.forEach(el => el.classList.remove('d-none'));
+                canInputElements.forEach(el => el.classList.remove('d-none'));
+            } else if (currentUser.role === 'staf') {
+                adminElements.forEach(el => el.classList.add('d-none'));
+                canInputElements.forEach(el => el.classList.remove('d-none'));
+            } else { // viewer
+                adminElements.forEach(el => el.classList.add('d-none'));
+                canInputElements.forEach(el => el.classList.add('d-none'));
+            }
+        }
+
+        // ISOLASI DATA PERSONAL PER USER
+        function getAccessibleSurat() {
+            if (currentUser.role === 'admin') {
+                return suratMasuk; // Admin bisa akses semua data
+            }
+            // User non-admin hanya bisa melihat data milik sendiri
+            return suratMasuk.filter(s => s.createdBy === currentUser.username);
+        }
+
+        // RENDER DASHBOARD
+        function renderDashboard() {
+            const accessibleSurat = getAccessibleSurat();
+            document.getElementById('dashTotalSurat').innerText = accessibleSurat.length;
+            document.getElementById('dashSuratSelesai').innerText = accessibleSurat.filter(s => s.status === 'Selesai').length;
+            document.getElementById('dashSuratProses').innerText = accessibleSurat.filter(s => s.status === 'Diproses' || s.status === 'Diterima').length;
+            document.getElementById('dashTotalKategori').innerText = kategori.length;
+
+            renderCharts(accessibleSurat);
+        }
+
+        function renderCharts(dataSurat) {
+            // Chart Bulan
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+            const monthCounts = new Array(12).fill(0);
+
+            dataSurat.forEach(s => {
+                if (s.tanggal) {
+                    const monthIdx = new Date(s.tanggal).getMonth();
+                    monthCounts[monthIdx]++;
+                }
+            });
+
+            const ctxBulan = document.getElementById('chartSuratBulan').getContext('2d');
+            if (chartBulanInstance) chartBulanInstance.destroy();
+            chartBulanInstance = new Chart(ctxBulan, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Jumlah Surat',
+                        data: monthCounts,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Chart Kategori
+            const katLabels = kategori.map(k => k.nama);
+            const katCounts = kategori.map(k => dataSurat.filter(s => s.kategoriId === k.id).length);
+
+            const ctxKat = document.getElementById('chartKategori').getContext('2d');
+            if (chartKategoriInstance) chartKategoriInstance.destroy();
+            chartKategoriInstance = new Chart(ctxKat, {
+                type: 'doughnut',
+                data: {
+                    labels: katLabels,
+                    datasets: [{
+                        data: katCounts,
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // SURAT MASUK CRUD
+        function renderSuratTable() {
+            const accessibleSurat = getAccessibleSurat();
+            const tbody = document.getElementById('tableSuratBody');
+            tbody.innerHTML = '';
+
+            if (accessibleSurat.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Belum ada data surat masuk.</td></tr>`;
+                return;
+            }
+
+            accessibleSurat.forEach(s => {
+                const katObj = kategori.find(k => k.id === s.kategoriId);
+                const katName = katObj ? katObj.nama : '-';
+
+                let badgeColor = 'bg-secondary';
+                if (s.status === 'Selesai') badgeColor = 'bg-success';
+                if (s.status === 'Diproses') badgeColor = 'bg-warning text-dark';
+                if (s.status === 'Diterima') badgeColor = 'bg-info text-dark';
+
+                const canEdit = currentUser.role === 'admin' || s.createdBy === currentUser.username;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-3"><strong class="text-primary">${s.no}</strong></td>
+                        <td>
+                            <div class="fw-semibold">${s.perihal}</div>
+                            <small class="text-muted"><i class="fa-solid fa-building me-1"></i>${s.pengirim}</small>
+                        </td>
+                        <td>${s.tanggal}</td>
+                        <td><span class="badge bg-light text-dark border">${katName}</span></td>
+                        <td><span class="badge badge-status ${badgeColor}">${s.status}</span></td>
+                        <td><small class="text-muted">${s.createdBy}</small></td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" onclick="viewDetailSurat('${s.id}')" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                ${s.fileData ? `<button class="btn btn-outline-success" onclick="downloadFile('${s.id}')" title="Unduh Berkas"><i class="fa-solid fa-download"></i></button>` : ''}
+                                ${canEdit && currentUser.role !== 'viewer' ? `
+                                    <button class="btn btn-outline-warning" onclick="editSurat('${s.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn btn-outline-danger" onclick="deleteSurat('${s.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) {
+                    Swal.fire('Ukuran Terlalu Besar', 'Maksimal ukuran berkas adalah 2MB', 'warning');
+                    e.target.value = '';
+                    return;
+                }
+                uploadedFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedFileBase64 = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openModalSurat() {
+            document.getElementById('modalSuratTitle').innerText = 'Tambah Surat Masuk';
+            document.getElementById('formSurat').reset();
+            document.getElementById('suratId').value = '';
+            uploadedFileBase64 = null;
+            uploadedFileName = '';
+            const modal = new bootstrap.Modal(document.getElementById('modalSurat'));
+            modal.show();
+        }
+
+        function saveSurat(e) {
+            e.preventDefault();
+            const id = document.getElementById('suratId').value;
+            const no = document.getElementById('suratNo').value;
+            const tanggal = document.getElementById('suratTanggal').value;
+            const pengirim = document.getElementById('suratPengirim').value;
+            const kategoriId = document.getElementById('suratKategori').value;
+            const perihal = document.getElementById('suratPerihal').value;
+            const status = document.getElementById('suratStatus').value;
+
+            if (id) {
+                // Edit
+                const idx = suratMasuk.findIndex(s => s.id === id);
+                if (idx !== -1) {
+                    suratMasuk[idx] = {
+                        ...suratMasuk[idx],
+                        no, tanggal, pengirim, kategoriId, perihal, status,
+                        fileData: uploadedFileBase64 || suratMasuk[idx].fileData,
+                        fileName: uploadedFileName || suratMasuk[idx].fileName
+                    };
+                }
+            } else {
+                // Tambah
+                const newSurat = {
+                    id: Date.now().toString(),
+                    no, tanggal, pengirim, kategoriId, perihal, status,
+                    createdBy: currentUser.username,
+                    fileData: uploadedFileBase64,
+                    fileName: uploadedFileName
+                };
+                suratMasuk.push(newSurat);
+            }
+
+            saveData();
+            bootstrap.Modal.getInstance(document.getElementById('modalSurat')).hide();
+            Swal.fire('Berhasil', 'Data surat berhasil disimpan', 'success');
+            renderDashboard();
+            renderSuratTable();
+        }
+
+        function editSurat(id) {
+            const s = suratMasuk.find(item => item.id === id);
+            if (!s) return;
+
+            document.getElementById('modalSuratTitle').innerText = 'Edit Surat Masuk';
+            document.getElementById('suratId').value = s.id;
+            document.getElementById('suratNo').value = s.no;
+            document.getElementById('suratTanggal').value = s.tanggal;
+            document.getElementById('suratPengirim').value = s.pengirim;
+            document.getElementById('suratKategori').value = s.kategoriId;
+            document.getElementById('suratPerihal').value = s.perihal;
+            document.getElementById('suratStatus').value = s.status;
+
+            uploadedFileBase64 = s.fileData;
+            uploadedFileName = s.fileName;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalSurat'));
+            modal.show();
+        }
+
+        function deleteSurat(id) {
+            Swal.fire({
+                title: 'Hapus Surat?',
+                text: 'Data yang dihapus tidak dapat dikembalikan!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, Hapus'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    suratMasuk = suratMasuk.filter(s => s.id !== id);
+                    saveData();
+                    renderDashboard();
+                    renderSuratTable();
+                    Swal.fire('Terhapus', 'Surat berhasil dihapus', 'success');
+                }
+            });
+        }
+
+        function viewDetailSurat(id) {
+            const s = suratMasuk.find(item => item.id === id);
+            if (!s) return;
+
+            const katObj = kategori.find(k => k.id === s.kategoriId);
+
+            document.getElementById('detailSuratContent').innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <tr><th width="30%">Nomor Surat</th><td>: ${s.no}</td></tr>
+                        <tr><th>Tanggal Masuk</th><td>: ${s.tanggal}</td></tr>
+                        <tr><th>Pengirim</th><td>: ${s.pengirim}</td></tr>
+                        <tr><th>Kategori</th><td>: ${katObj ? katObj.nama : '-'}</td></tr>
+                        <tr><th>Perihal</th><td>: ${s.perihal}</td></tr>
+                        <tr><th>Status</th><td>: <span class="badge bg-primary">${s.status}</span></td></tr>
+                        <tr><th>Penginput</th><td>: ${s.createdBy}</td></tr>
+                        <tr>
+                            <th>Lampiran Berkas</th>
+                            <td>: ${s.fileData ? `
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="previewFile('${s.id}')"><i class="fa-solid fa-eye me-1"></i>Lihat Berkas</button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${s.id}')"><i class="fa-solid fa-download me-1"></i>Unduh Berkas (${s.fileName})</button>
+                                </div>
+                            ` : '<span class="text-muted">Tidak ada lampiran</span>'}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            const modal = new bootstrap.Modal(document.getElementById('modalDetailSurat'));
+            modal.show();
+        }
+
+        // UNDUH DAN PREVIEW FILE
+        function downloadFile(id) {
+            const s = suratMasuk.find(item => item.id === id);
+            if (!s || !s.fileData) return;
+
+            const link = document.createElement('a');
+            link.href = s.fileData;
+            link.download = s.fileName || 'Lampiran_Surat.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function previewFile(id) {
+            const s = suratMasuk.find(item => item.id === id);
+            if (!s || !s.fileData) return;
+
+            const win = window.open();
+            win.document.write(`<iframe src="${s.fileData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+        }
+
+        // KATEGORI SURAT CRUD
+        function renderKategoriList() {
+            const area = document.getElementById('kategoriListArea');
+            area.innerHTML = '';
+
+            kategori.forEach(k => {
+                const totalInKat = getAccessibleSurat().filter(s => s.kategoriId === k.id).length;
+                area.innerHTML += `
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold mb-0 text-primary">${k.nama}</h6>
+                                ${currentUser.role === 'admin' ? `
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#" onclick="editKategori('${k.id}')">Edit</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteKategori('${k.id}')">Hapus</a></li>
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <p class="text-muted small mb-3">${k.deskripsi || 'Tidak ada deskripsi'}</p>
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <span class="badge bg-light text-dark border">${totalInKat} Surat</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function populateKategoriDropdowns() {
+            const selectSurat = document.getElementById('suratKategori');
+            const selectFilter = document.getElementById('filterKategori');
+
+            selectSurat.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+            selectFilter.innerHTML = '<option value="">-- Semua Kategori --</option>';
+
+            kategori.forEach(k => {
+                selectSurat.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
+                selectFilter.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
+            });
+        }
+
+        function openModalKategori() {
+            document.getElementById('modalKategoriTitle').innerText = 'Tambah Kategori';
+            document.getElementById('formKategori').reset();
+            document.getElementById('kategoriId').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('modalKategori'));
+            modal.show();
+        }
+
+        function saveKategori(e) {
+            e.preventDefault();
+            const id = document.getElementById('kategoriId').value;
+            const nama = document.getElementById('kategoriNama').value;
+            const deskripsi = document.getElementById('kategoriDeskripsi').value;
+
+            if (id) {
+                const idx = kategori.findIndex(k => k.id === id);
+                if (idx !== -1) kategori[idx] = { id, nama, deskripsi };
+            } else {
+                kategori.push({ id: Date.now().toString(), nama, deskripsi });
+            }
+
+            saveData();
+            bootstrap.Modal.getInstance(document.getElementById('modalKategori')).hide();
+            renderKategoriList();
+            populateKategoriDropdowns();
+            renderDashboard();
+            Swal.fire('Berhasil', 'Kategori disimpan', 'success');
+        }
+
+        function editKategori(id) {
+            const k = kategori.find(item => item.id === id);
+            if (!k) return;
+
+            document.getElementById('modalKategoriTitle').innerText = 'Edit Kategori';
+            document.getElementById('kategoriId').value = k.id;
+            document.getElementById('kategoriNama').value = k.nama;
+            document.getElementById('kategoriDeskripsi').value = k.deskripsi;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalKategori'));
+            modal.show();
+        }
+
+        function deleteKategori(id) {
+            Swal.fire({
+                title: 'Hapus Kategori?',
+                text: 'Kategori akan dihapus.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Hapus'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    kategori = kategori.filter(k => k.id !== id);
+                    saveData();
+                    renderKategoriList();
+                    populateKategoriDropdowns();
+                    renderDashboard();
+                }
+            });
+        }
+
+        // FILTER LANJUTAN
+        function applyFilter() {
+            const kw = document.getElementById('filterKeyword').value.toLowerCase();
+            const kat = document.getElementById('filterKategori').value;
+            const st = document.getElementById('filterStatus').value;
+
+            let filtered = getAccessibleSurat();
+
+            if (kw) {
+                filtered = filtered.filter(s => s.no.toLowerCase().includes(kw) || s.perihal.toLowerCase().includes(kw) || s.pengirim.toLowerCase().includes(kw));
+            }
+            if (kat) {
+                filtered = filtered.filter(s => s.kategoriId === kat);
+            }
+            if (st) {
+                filtered = filtered.filter(s => s.status === st);
+            }
+
+            const tbody = document.getElementById('tableFilterBody');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Tidak ada surat yang sesuai kriteria filter.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(s => {
+                const katObj = kategori.find(k => k.id === s.kategoriId);
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-3"><strong class="text-primary">${s.no}</strong></td>
+                        <td>
+                            <div class="fw-semibold">${s.perihal}</div>
+                            <small class="text-muted">${s.pengirim}</small>
+                        </td>
+                        <td>${s.tanggal}</td>
+                        <td>${katObj ? katObj.nama : '-'}</td>
+                        <td><span class="badge bg-secondary">${s.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // LAPORAN & REKAP
+        function generateLaporan() {
+            const bln = document.getElementById('laporanBulan').value;
+            const thn = document.getElementById('laporanTahun').value;
+
+            let data = getAccessibleSurat();
+
+            if (bln !== 'all') {
+                data = data.filter(s => s.tanggal.split('-')[1] === bln);
+            }
+            if (thn) {
+                data = data.filter(s => s.tanggal.split('-')[0] === thn);
+            }
+
+            const tbody = document.getElementById('tableLaporanBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-3">Tidak ada data surat pada periode ini.</td></tr>`;
+                return;
+            }
+
+            data.forEach((s, idx) => {
+                const katObj = kategori.find(k => k.id === s.kategoriId);
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="text-center">${idx + 1}</td>
+                        <td>${s.no}</td>
+                        <td>${s.tanggal}</td>
+                        <td>${s.pengirim}</td>
+                        <td>${s.perihal}</td>
+                        <td>${katObj ? katObj.nama : '-'}</td>
+                        <td class="text-center">${s.status}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('printOfficer').innerText = currentUser.name;
+        }
+
+        function printLaporan() {
+            window.print();
+        }
+
+        function exportToExcel() {
+            let csv = 'No;Nomor Surat;Tanggal Masuk;Pengirim;Perihal;Kategori;Status\n';
+            const data = getAccessibleSurat();
+
+            data.forEach((s, idx) => {
+                const katObj = kategori.find(k => k.id === s.kategoriId);
+                csv += `${idx + 1};"${s.no}";"${s.tanggal}";"${s.pengirim}";"${s.perihal}";"${katObj ? katObj.nama : '-'}";"${s.status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Rekap_Surat_Masuk_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+        }
+
+        // PENGATURAN PENGGUNA (ADMIN ONLY)
+        function renderPenggunaTable() {
+            const tbody = document.getElementById('tablePenggunaBody');
+            tbody.innerHTML = '';
+
+            users.forEach(u => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-3 fw-semibold">${u.name}</td>
+                        <td>${u.username}</td>
+                        <td><span class="badge bg-secondary text-uppercase">${u.role}</span></td>
+                        <td class="text-center">
+                            ${u.username !== DEFAULT_ADMIN ? `
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${u.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                            ` : '<small class="text-muted">Utama</small>'}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deleteUser(id) {
+            Swal.fire({
+                title: 'Hapus Akun Pengguna?',
+                text: 'Pengguna tidak akan bisa masuk lagi.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Hapus'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    users = users.filter(u => u.id !== id);
+                    saveData();
+                    renderPenggunaTable();
+                    Swal.fire('Terhapus', 'Akun telah dihapus', 'success');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
